@@ -13,6 +13,24 @@ def data_Lists(raw, col_no):
             else: temp_list.append(raw.cell_value(i, col_no))
     return(temp_list)
 
+def remove_solvents(data_abs_list, data_wave_list, solvent_abs_list, solvent_wave_list):
+    """
+    Remove solvent absorbance data from subject UV/Vis data.
+    :param data_abs_list: list of subject absorbance data
+    :param data_wave_list: list of subject wavelength data
+    :param solvent_abs_list: list of solvent absorbance data
+    :param solvent_wave_list: list of solvent wavelength data
+    :return: List of corrected data
+    """
+    solvent_adj_list = []
+    solvent_index = 0
+    for x in range(len(data_wave_list)):
+        current_data_wave = data_wave_list[x]
+        solvent_index = solvent_wave_list.index(current_data_wave)
+        solvent_adj_list.append(data_abs_list[x] - solvent_abs_list[solvent_index])
+    return(solvent_adj_list)
+
+
 wavelength = data_Lists(raw_data,0)
 acetone1_600 = data_Lists(raw_data,1)
 acetone1_300 = data_Lists(raw_data,2)

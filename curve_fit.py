@@ -3,17 +3,14 @@ import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 import xlrd as xlrd
-import solvents
+import solvents, setup_parameters, curve_functions
 
-add_File = '20171115_SnTe_Absorbance.xlsx'
+
+add_File = setup_parameters.file
 add_Folder = add_File[:8] + '\\'
 add_Base = r'C:\Users\Sean\PhD UR\Data\UV-Vis-NIR Absorbance\\'
-abcgh = [0.022, 2150, 100, 1.8e7, 2.8]
-print(add_Base + add_Folder + add_File)
 
 raw_data = xlrd.open_workbook(filename = add_Base + add_Folder + add_File).sheet_by_index(0)
-# print(len(raw_data.col(0)))
-trailingZeros = 2651
 
 def characterizeList(l):
     for i in range(len(l)):
@@ -24,77 +21,58 @@ def characterizeList(l):
     print('done')
 
 wavelength = []
-x_col = 0
-for row in range(350,len(raw_data.col(x_col))): ##start after 2 to remove column header//302 to remove quartz peak
-    if type(raw_data.cell_value(row, x_col)) != type('string'):
-        wavelength.append(raw_data.cell_value(row, x_col))
-# wavelength = wavelength[:trailingZeros] #manual removal of trailing zeros
+setup_parameters.x_col = 0
+for row in range(setup_parameters.start_row,len(raw_data.col(setup_parameters.x_col))):
+    if type(raw_data.cell_value(row, setup_parameters.x_col)) != type('string'):
+        wavelength.append(raw_data.cell_value(row, setup_parameters.x_col))
 # characterizeList(wavelength)
 
 counts = []
-y_col = 1
-#Make list of absorbance data
-for row in range(350,len(raw_data.col(y_col))): ##start after 2 to remove column header//302 to remove quartz peak
-    if type(raw_data.cell_value(row, y_col)) != type('string'):
-        counts.append(raw_data.cell_value(row, y_col))
-# counts = counts[:trailingZeros] #manual removal of trailing zeros
-# Adjust absorbance data baseline to zero
-minCounts = min(counts)
-for i in range(len(counts)):
-    counts[i] = counts[i] - minCounts
-# Adjust absorbance data for solvent peaks
-solvents_remove = [solvents.acetone1_600, solvents.chloroform1_600, solvents.OA1_1500]
-for j in range(len(solvents_remove)):
-    counts = solvents.remove_solvents(counts, wavelength, solvents_remove[j], solvents.wavelength)
-characterizeList(counts)
+setup_parameters.y_col = 1
+    #Make list of absorbance data
+for row in range(setup_parameters.start_row,len(raw_data.col(setup_parameters.y_col))):
+    if type(raw_data.cell_value(row, setup_parameters.y_col)) != type('string'):
+        if raw_data.cell_value(row, setup_parameters.y_col) < 0:
+            counts.append(0.)
+        else:   counts.append(raw_data.cell_value(row, setup_parameters.y_col))
+#    #Adjust absorbance data baseline to zero
+# minCounts = min(counts)
+# for i in range(len(counts)):
+#     counts[i] = counts[i] - minCounts
+initial_Counts = counts
+    # Adjust absorbance data for solvent peaks
+for j in range(len(setup_parameters.solvents_remove)):
+    counts = solvents.remove_solvents(counts, wavelength, setup_parameters.solvents_remove[j], solvents.wavelength)
+# characterizeList(counts)
 
-def gaussian(x,a,b,c):
-    return (a*np.exp(-(x-b)**2/(2*c**2)))
+# (param, covar) = opt.curve_fit(curve_functions.gaussian, wavelength, counts, p0 = [setup_parameters.abcgh['a'], setup_parameters.abcgh['b'], setup_parameters.abcgh['c'], setup_parameters.abcgh['shift']])#, bounds = (0, np.inf))
+# print(param)
 
-def gaussian2(p, a, p0, w):
-    x = (p0 - p)/(w/2)
-    return (a*np.exp(-np.log(2)*x**2))
-
-def lorentzian(p, a, p0, w):
-    x = (p0 - p) / (w / 2)
-    return (a*(1/(1+x**2)))
-
-def voigt(x, sigma, gamma, q):
-    g = np.exp(-x**2/(2*sigma**2))/(sigma*np.sqrt(2*np.pi))
-    l = gamma/(np.pi*((q - x)**2 + gamma**2))
-    return sp.integrate.quad(g*l, -np.inf, np.inf)
-
-def SnTe_UVVis1(x,a,b,c,g,h):
-    '''a: gaussian (SnTe abs.) height
-    b: wavelength of peak max
-    c: gaussian curve standard deviation/width'''
-    gauss = (a*np.exp(-(x-b)**2/(2*c**2)))
-    power = g*x**(-h)
-    return (gauss+power)
-
-(param, covar) = opt.curve_fit(gaussian, wavelength, counts, p0 = [abcgh[0], abcgh[1], abcgh[2]])#, bounds = (0, np.inf))
-print(param)
-
-# (param2, covar2) = opt.curve_fit(gaussian2, wavelength, counts, p0 = [7.6e5, 823, 1])#, bounds = (0, np.inf))
+# (param2, covar2) = opt.curve_fit(curve_functions.gaussian2, wavelength, counts, p0 = [7.6e5, 823, 1,])#, bounds = (0, np.inf))
 # print(param2)
 
-# (param3, covar3) = opt.curve_fit(lorentzian, wavelength, counts, p0 = [7.6e5, 823, 1])#, bounds = (0, np.inf))
+# (param3, covar3) = opt.curve_fit(curve_functions.lorentzian, wavelength, counts, p0 = [7.6e5, 823, 1])#, bounds = (0, np.inf))
 # print(param3)
 
-# (param4, covar4) = opt.curve_fit(SnTe_UVVis1, wavelength, counts, p0 = [abcgh[0], abcgh[1], abcgh[2], abcgh[3], abcgh[4]])#, bounds = (0, np.inf))
-# print(param4)
+(param4, covar4) = opt.curve_fit(curve_functions.SnTe_UVVis1, wavelength, counts,\
+                                 p0 = [setup_parameters.abcgh['a'], setup_parameters.abcgh['b'], setup_parameters.abcgh['c'], setup_parameters.abcgh['g'], setup_parameters.abcgh['h'], setup_parameters.abcgh['shift']])#, bounds = (0, np.inf))
+print(param4)
 
-x = np.arange(0,3500,1)
+x = np.arange(100,3600,1)
 plt.figure(1)
 plt.rcParams.update({'font.size': 14})
-plt.plot(wavelength, counts,'o', color = 'b', label = 'Raw data')
-plt.plot(x, gaussian(x,param[0],param[1],param[2]), color = 'r', linewidth=1.0, label = 'Gaussian fit')
-# plt.plot(x, gaussian2(x,param2[0],param2[1],param2[2]), color = 'g', linewidth=1.0, label = 'Gaussian fit')
-# plt.plot(x, lorentzian(x,param3[0],param3[1],param3[2]), color = 'c', linewidth=1.0, label = 'Lorentzian fit')
-# plt.plot(x, SnTe_UVVis1(x,param4[0],param4[1],param4[2], param4[3], param4[4]), color = 'r', linewidth=1.0, label = 'Fit')
+plt.plot(wavelength, counts,'p', color = 'b', label = 'Solvent adj. raw data')
+plt.plot(wavelength, initial_Counts,'o', color = 'k', label = 'Raw data')
+# plt.plot(x, curve_functions.gaussian(x,param[0],param[1],param[2], param[3]), color = 'r', linewidth=1.0, label = 'Gaussian fit')
+# plt.plot(x, curve_functions.gaussian2(x,param2[0],param2[1],param2[2]), color = 'g', linewidth=1.0, label = 'Gaussian fit')
+# plt.plot(x, curve_functions.lorentzian(x,param3[0],param3[1],param3[2]), color = 'c', linewidth=1.0, label = 'Lorentzian fit')
+plt.plot(x, curve_functions.SnTe_UVVis1(x,param4[0],param4[1],param4[2], param4[3], param4[4], param4[5]), color = 'r', linewidth=1.0, label = 'Fit')
+#     #Plot solvent data
+# for q in range(len(setup_parameters.solvents_remove)):
+#     plt.plot(solvents.wavelength, setup_parameters.solvents_remove[q])
 plt.grid(b=True, which='major', color='k', linestyle='-')
 plt.grid(b=True, which='minor', color='0.65', linestyle='--')
-plt.legend(loc = 1)
+# plt.legend(loc = 1)
 plt.minorticks_on()
 plt.xlabel('$\lambda\ [nm]$')
 plt.ylabel('$counts$')
@@ -107,7 +85,7 @@ plt.ylabel('$counts$')
 
 plt.tight_layout()
 # plt.xlim(0,3500)
-# plt.ylim(0, abcgh[0]*1.02)
+plt.ylim(0, setup_parameters.abcgh['a']*1.3)
 # plt.ylim(0, max(counts))
-plt.ylim(-0.01,0.05)
+# plt.ylim(-0.01,0.11)
 plt.show()

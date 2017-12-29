@@ -1,4 +1,5 @@
 import numpy as np
+import sympy as sp
 
 def gaussian(x,a,b,c,shift):
     return (a*np.exp(-(x-b)**2/(2*c**2)) + shift)
@@ -23,3 +24,20 @@ def SnTe_UVVis1(x,a,b,c,g,h,shift):
     gauss = (a*np.exp(-(x-b)**2/(2*c**2)) + shift)
     power = g*x**(-h)
     return (gauss+power)
+
+## Fit solvent peak data with polynomial, find + second derivative that coincide with zero 1st derivative to find
+## local maxima - fit gaussian to that point??
+def deriv(x,y,t):
+    a = 5
+    param = np.polyfit(x,y,a)
+    # z = sp.symbols('z')
+    # fDeriv = sp.diff(float(param[0])*z**5 + float(param[1])*z**4 + float(param[2])*z**3 + float(param[3])*z**2 + float(param[4])*z + float(param[5]), z)
+    # sDeriv = sp.diff(fDeriv, z)
+    # print(fDeriv)
+    fDeriv = []
+    for i in range(len(param)):
+        fDeriv.append(param[i]*(a-i))
+    print(fDeriv)
+    if t == 1: return fDeriv
+    elif t == 2: return sDeriv
+    else: return "wrong!"

@@ -22,8 +22,12 @@ def SnTe_UVVis1(x,a,b,c,g,h,shift):
     b: wavelength of peak max
     c: gaussian curve standard deviation/width'''
     gauss = (a*np.exp(-(x-b)**2/(2*c**2)) + shift)
-    power = g*x**(-h)
-    return (gauss+power)
+    a0 = g
+    U = h
+    t = 1 ## 1 cm cuvette (alpha is in cm**-1)
+    alpha = a0*sp.exp(U/x)
+    urbach = alpha*t/sp.ln(10)
+    return (gauss + urbach)
 
 ## Fit solvent peak data with polynomial, find + second derivative that coincide with zero 1st derivative to find
 ## local maxima - fit gaussian to that point??

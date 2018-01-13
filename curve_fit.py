@@ -35,14 +35,14 @@ for row in range(setup_parameters.start_row,len(raw_data.col(setup_parameters.y_
         if raw_data.cell_value(row, setup_parameters.y_col) < 0:
             counts.append(0.)
         else:   counts.append(raw_data.cell_value(row, setup_parameters.y_col))
-#    #Adjust absorbance data baseline to zero
-# minCounts = min(counts)
-# for i in range(len(counts)):
-#     counts[i] = counts[i] - minCounts
+#Adjust absorbance data baseline to zero
+minCounts = min(counts[wavelength.index(2400):])
+for i in range(len(counts)):
+    counts[i] = counts[i] - minCounts
 initial_Counts = counts
-    # Adjust absorbance data for solvent peaks
+# Adjust absorbance data for solvent peaks
 for j in range(len(setup_parameters.solvents_remove)):
-    counts = solvents.remove_solvents(counts, wavelength, setup_parameters.solvents_remove[j], solvents.wavelength)
+    (counts,trimmed,fit_peak) = solvents.remove_solvents(counts, wavelength, setup_parameters.solvents_remove[j], solvents.wavelength)
 # characterizeList(counts)
 
 # (param, covar) = opt.curve_fit(curve_functions.gaussian, wavelength, counts, p0 = [setup_parameters.abcgh['a'], setup_parameters.abcgh['b'], setup_parameters.abcgh['c'], setup_parameters.abcgh['shift']])#, bounds = (0, np.inf))

@@ -1,0 +1,4 @@
+get solvent peak above baseline curve
+scale/interpolate solvent spectrum
+subtract solvent spectrum from sample spectrum
+iterate subtraction over all solvents

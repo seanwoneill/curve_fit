@@ -2,7 +2,7 @@ import xlrd as xlrd
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
 import numpy as np
-import curve_functions, setup_parameters
+import curve_functions  ##import solvents given in body of code to prevent error
 
 raw_data = xlrd.open_workbook(filename = r'C:\Users\Sean\PhD UR\Data\UV-Vis-NIR Absorbance\20171117 Solvent spectra\20171117_Solvent spectra.xlsx').sheet_by_index(0)
 
@@ -18,9 +18,9 @@ def debug_plotting(x, y):
     plt.ylabel('$counts$')
 
     plt.tight_layout()
-    plt.xlim(2235, 2215)
+    # plt.xlim(2235, 2215)
     # plt.ylim(0, max(y))
-    plt.ylim(0,0.007)
+    # plt.ylim(0,0.007)
     plt.show()
 
 class class_Solvent:
@@ -38,6 +38,21 @@ def data_Lists(raw, col_no):
             else: temp_list.append(raw.cell_value(i, col_no))
     return(temp_list)
 
+wavelength = data_Lists(raw_data, 0)
+acetone1_600 = class_Solvent(data_Lists(raw_data, 1), 'acetone')
+acetone1_300 = class_Solvent(data_Lists(raw_data, 2), 'acetone')
+acetone1_60 = class_Solvent(data_Lists(raw_data, 3), 'acetone')
+acetone1_30 = class_Solvent(data_Lists(raw_data, 4), 'acetone')
+chloroform1_600 = class_Solvent(data_Lists(raw_data, 5), 'chloroform')
+chloroform1_300 = class_Solvent(data_Lists(raw_data, 6), 'chloroform')
+chloroform1_60 = class_Solvent(data_Lists(raw_data, 7), 'chloroform')
+OA1_1500 = class_Solvent(data_Lists(raw_data, 8), 'OA')
+OA1_600 = class_Solvent(data_Lists(raw_data, 9), 'OA')
+OA1_300 = class_Solvent(data_Lists(raw_data, 10), 'OA')
+##  Need to import setup_parameters after defining solvents to prevent error.
+##  setup_parameters needs to be imported before used in remove_solvents function
+##  solvents must be defined after defining the solvent class and the data_Lists function
+import setup_parameters
 
 def remove_solvents(data_abs_list, data_wave_list, solvent_abs_list, solvent_wave_list):
     """
@@ -56,7 +71,7 @@ def remove_solvents(data_abs_list, data_wave_list, solvent_abs_list, solvent_wav
     # trimmed_solvent_abs = class_Solvent(solvent_abs_list.solvent_data[solvent_index_bounds[0]:solvent_index_bounds[1]],\
     #                                      solvent_abs_list.peak)
     trimmed_data_abs = data_abs_list[abs_index_bounds[0]:abs_index_bounds[1]]
-    # debug_plotting(trimmed_data_wave, trimmed_data_abs)
+    debug_plotting(trimmed_data_wave, trimmed_data_abs)
 
     #acetone_abcgh = {'a':0.09, 'b':2263., 'c':30., 'g':1.8e7, 'h':2.8, 'shift':0.075}
     (solvent_peak_param, solvent_covar) = opt.curve_fit(curve_functions.gaussian, trimmed_data_wave, trimmed_data_abs, \
@@ -64,7 +79,7 @@ def remove_solvents(data_abs_list, data_wave_list, solvent_abs_list, solvent_wav
                                            setup_parameters.solvent_correction_dict[solvent_abs_list.peak]['b'], \
                                            setup_parameters.solvent_correction_dict[solvent_abs_list.peak]['c'], \
                                            setup_parameters.solvent_correction_dict[solvent_abs_list.peak]['shift']])
-    print(solvent_peak_param)
+    print('solvent peak: ',solvent_peak_param)
     # x = np.arange(2000, 2500, 2)
     # debug_plotting(x, curve_functions.gaussian(x,param[0],param[1],param[2], param[3]))
 
@@ -81,16 +96,6 @@ def remove_solvents(data_abs_list, data_wave_list, solvent_abs_list, solvent_wav
     # return(solvent_adj_list)
     return(solvent_adj_list, (trimmed_data_wave, trimmed_data_abs) ,solvent_peak_param)
 
-wavelength = data_Lists(raw_data, 0)
-acetone1_600 = class_Solvent(data_Lists(raw_data, 1), 'acetone')
-acetone1_300 = class_Solvent(data_Lists(raw_data, 2), 'acetone')
-acetone1_60 = class_Solvent(data_Lists(raw_data, 3), 'acetone')
-acetone1_30 = class_Solvent(data_Lists(raw_data, 4), 'acetone')
-chloroform1_600 = class_Solvent(data_Lists(raw_data, 5), 'chloroform')
-chloroform1_300 = class_Solvent(data_Lists(raw_data, 6), 'chloroform')
-chloroform1_60 = class_Solvent(data_Lists(raw_data, 7), 'chloroform')
-OA1_1500 = class_Solvent(data_Lists(raw_data, 8), 'OA')
-OA1_600 = class_Solvent(data_Lists(raw_data, 9), 'OA')
-OA1_300 = class_Solvent(data_Lists(raw_data, 10), 'OA')
+
 
 # debug_plotting(wavelength, acetone1_600)

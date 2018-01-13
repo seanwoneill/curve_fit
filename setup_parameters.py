@@ -7,7 +7,7 @@ x_col = 0
 y_col = 1
 
 #    #Subject absorbance fitting parameters
-abcgh = {'a':0.08, 'b':2100., 'c':300., 'g':1.8e7, 'h':2.8, 'shift':0.05}
+abcgh = {'a':0.08, 'b':2100., 'c':300., 'g':100, 'h':-5, 'shift':0.}
 # print(add_Base + add_Folder + add_File)
 
 solvents_remove = [solvents.acetone1_300]#, solvents.chloroform1_600, solvents.OA1_1500]
